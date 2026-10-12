@@ -1,0 +1,7 @@
+# Temporary editor files
+*.swp
+*.swo
+*~
+
+# Machine-specific files
+.DS_Store
