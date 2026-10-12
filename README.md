@@ -1,129 +1,63 @@
-# Fedora Neovim C# Development Setup
+# Fedora Development Dotfiles
 
-Personal Neovim configuration for C# development on Fedora, managed with Git.
+Personal development environment for **Fedora, Neovim, C#/.NET, tmux, and Claude Code**.
 
-## Requirements
+This repository contains the configuration and documentation needed to reproduce my development setup on another Fedora machine.
 
-- Fedora Linux
-- Neovim 0.12.5 (tested)
-- .NET SDK 10
-- Git
-- ripgrep (`rg`)
-- fd (`fd`)
+## Features
 
-Install missing Fedora packages:
+- **Neovim** — Neo-tree, Telescope, Treesitter, Roslyn language server, and blink.cmp completion.
+- **C# debugging** — F5 launches the current .NET application using `nvim-dap`, `netcoredbg`, and MSBuild project metadata.
+- **tmux** — Persistent terminal sessions with separate panes for Neovim, Claude Code, and builds.
+- **Claude Code** — Runs as a separate CLI alongside Neovim.
+- **Reproducibility** — Tracked configuration, plugin lockfile, recovery instructions, and troubleshooting guides.
 
-```bash
-sudo dnf install neovim git ripgrep fd-find
-```
+## Documentation
 
-Install .NET SDK 10 separately if not already available.
+All detailed documentation is in [`docs/`](docs/).
 
-## Install configuration
+| Guide | Description |
+|---|---|
+| [Documentation index](docs/README.md) | Start here |
+| [Manual](docs/MANUAL.md) | Installation, daily workflow, and disaster recovery |
+| [Cheatsheet](docs/CHEATSHEET.md) | Keyboard shortcuts and commands |
+| [C# Debugging](docs/DEBUGGING.md) | F5, breakpoints, MSBuild, and `netcoredbg` |
+| [Configuration Reference](docs/CONFIG_REFERENCE.md) | Neovim and tmux configuration details |
+| [Rebuild Prompt](docs/REBUILD_PROMPT.md) | Recreate the environment with AI assistance |
+| [Tools](docs/TOOLS.md) | Software requirements and tested versions |
 
-Clone the dotfiles repository into:
-
-```text
-~/.config/dotfiles
-```
-
-If an existing Neovim configuration is present, back it up first.
-
-Then create the symlink:
+## Quick Start
 
 ```bash
-ln -s ~/.config/dotfiles/nvim ~/.config/nvim
+# Clone the private repository after authenticating with GitHub
+git clone https://github.com/AlzPatz/dotfiles.git ~/.config/dotfiles
 ```
 
-Verify:
+Follow the [installation and recovery manual](docs/MANUAL.md) to install dependencies, safely create configuration symlinks, restore Neovim plugins, and install Roslyn and `netcoredbg`.
+
+For everyday C# development:
 
 ```bash
-readlink -f ~/.config/nvim
-```
-
-Expected:
-
-```text
-/home/YOUR_USERNAME/.config/dotfiles/nvim
-```
-
-## Restore Neovim plugins
-
-Start Neovim:
-
-```bash
-nvim
-```
-
-lazy.nvim will bootstrap itself and install the configured plugins.
-
-Run:
-
-```vim
-:Lazy restore
-```
-
-This restores plugin versions from `nvim/lazy-lock.json`.
-
-## Install Roslyn
-
-Open Mason:
-
-```vim
-:Mason
-```
-
-Find `roslyn-language-server` and install it.
-
-Tested version: `5.12.0-1.26426.8`.
-
-The plugin lockfile does not pin the Roslyn server version. Check the installed version in Mason and install the tested version when available.
-
-## C# workflow
-
-Open Neovim from the directory containing your `.sln` or `.slnx` file:
-
-```bash
-cd /path/to/solution
+cd /path/to/application-project
+dotnet build -c Debug
 nvim .
 ```
 
-Roslyn loads when a C# file is opened.
+Open a `.cs` file, press **Ctrl+N** for the file explorer, and **F5** to start debugging.
 
-### Keymaps
+## Repository Layout
 
-| Keys | Action |
-|---|---|
-| `Ctrl+n` | Toggle file explorer |
-| `Space f f` | Find files |
-| `Space f g` | Search project text |
-| `Space f b` | Switch buffers |
-| `Space f h` | Search Neovim help |
-| `gd` | Go to definition |
-| `gr` | Find references |
-| `gi` | Go to implementation |
-| `gy` | Go to type definition |
-| `K` | Show documentation |
-| `Ctrl+o` | Return to previous location |
-| `[d` / `]d` | Previous / next diagnostic |
-| `Space e` | Show diagnostic details |
-| `Ctrl+h/j/k/l` | Move between editor windows |
+```text
+dotfiles/
+├── README.md
+├── docs/
+├── nvim/
+│   ├── init.lua
+│   ├── lazy-lock.json
+│   └── lua/config/
+└── tmux.conf
+```
 
-### Completion
+**Important:** This repository does not contain credentials, project source repositories, installed SDKs, or personal data. Back those up separately.
 
-| Keys | Action |
-|---|---|
-| `Ctrl+Space` | Trigger completion |
-| `Ctrl+n` / `Ctrl+p` | Navigate suggestions |
-| `Ctrl+y` | Accept suggestion |
-| `Ctrl+e` | Dismiss suggestions |
-
-## Maintenance
-
-- Edit configuration in `~/.config/dotfiles/nvim/`.
-- Commit changes to Git.
-- Pull changes on the other Fedora machine.
-- Use `:Lazy restore` to restore pinned plugin versions.
-- Update plugins intentionally, then commit the updated `lazy-lock.json`.
-
-Mason packages, plugin binaries, caches, and machine-specific data are not committed.
+The tracked configuration files are the source of truth. See the [manual](docs/MANUAL.md) before modifying or rebuilding the environment.

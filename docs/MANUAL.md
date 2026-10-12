@@ -295,6 +295,16 @@ Use `:Mason` to inspect installed tools; use `:checkhealth vim.lsp` to diagnose 
 
 ---
 
+### 3.8 Native C# debugging (tested October 2026)
+
+The working debugger uses `mfussenegger/nvim-dap`, Mason-installed `netcoredbg`, and (when installed correctly) `rcarriga/nvim-dap-ui` with `nvim-neotest/nvim-nio`. The tested F5 launch **does not scan DLLs**. Instead it runs `dotnet msbuild -getProperty:OutputType -getProperty:TargetPath -property:Configuration=Debug` in Neovim's current directory (`:pwd`), checks for `Exe`/`WinExe`, checks that the returned DLL exists, and launches it through `netcoredbg`. It does not rebuild automatically. See [DEBUGGING.md](DEBUGGING.md) for the full workflow, implementation notes, and troubleshooting.
+
+For the tested game: `:cd /home/alex/Projects/code/yak/sis-escape-run/src/sis-escape-run` in Neovim, `dotnet build -c Debug` in the shell, and `F5` from a C# buffer launched `sis-escape-run.dll`, not the dozens of copied dependency DLLs. `F9` sets a breakpoint; `F10` steps over, `F11` steps in, `Shift+F11` steps out (subject to terminal support); `Space dt` terminates; `Space du` toggles DAP UI when installed. `F5` continues when paused.
+
+**Directory distinction:** Starting Neovim from a solution root helps Roslyn see the solution, but the current F5 resolver requires `:pwd` to point to the **application project directory** containing one unambiguous `.csproj`. `:cd` changes Neovim's directory; it does not change the shell in an existing tmux pane. Opening a source file alone does not change `:pwd`.
+
+**Known limitation:** The project metadata query is synchronous and may briefly block the UI. It assumes a single project in `:pwd` and a conventional runnable .NET assembly; it does not handle launch profiles, automatic builds, multi-target selection, arguments, or special application startup. This is intentionally simpler than a full IDE launch-profile manager.
+
 ## 4. Neovim daily keyboard reference
 
 **Notation:** `Space ff` means press Space, then `f`, then `f` in **normal mode**. `Ctrl+b`, `%` means hold Ctrl and press b, release, then press `%`. `Esc` returns from insert mode to normal mode.
@@ -304,6 +314,10 @@ Use `:Mason` to inspect installed tools; use `:checkhealth vim.lsp` to diagnose 
 | Keys | Mode | Result |
 | --- | --- | --- |
 | `Ctrl+n` | Normal | Toggle Neo-tree |
+| `F5` | Normal, C# | Start/continue debugging the project in `:pwd` |
+| `F9` | Normal | Toggle breakpoint |
+| `F10` / `F11` / `Shift+F11` | Normal | Step over / into / out (terminal dependent) |
+| `Space db` / `Space dt` / `Space du` | Normal | Breakpoint / terminate / toggle DAP UI |
 | `Space ff` | Normal | Telescope: find files |
 | `Space fg` | Normal | Telescope: live grep |
 | `Space fb` | Normal | Telescope: buffers |
@@ -530,7 +544,7 @@ git status --short
 cd ~/.config/dotfiles
 git diff
 git status --short
-git add README.md MANUAL.md tmux.conf nvim
+git add docs/ tmux.conf nvim
 git commit -m "Document development setup and recovery"
 git push
 ```
@@ -566,6 +580,10 @@ Use `tmux attach -t NAME`, or choose a different session name. `tmux ls` lists s
 ### tmux is gone after a reboot
 
 Expected: tmux is not persistent across machine reboot without additional session restoration tooling, which has not been configured. Restart `tmux new -s NAME` and your applications.
+
+### F5 launches wrong DLL or does not launch
+
+Check `:pwd`: it must be the application project directory, not the solution root or a library. From that directory run `dotnet msbuild -getProperty:OutputType -getProperty:TargetPath -property:Configuration=Debug`; confirm `OutputType` is `Exe`/`WinExe`, build with `dotnet build -c Debug`, and check that `TargetPath` exists. If the DAP UI plugin reports missing, inspect `:Lazy` and restore plugins using the tracked lockfile; an empty directory containing only `.git` is not a complete plugin checkout. Do not delete Neovim swap files to solve Lua syntax errors. See [DEBUGGING.md](DEBUGGING.md).
 
 ### Neovim starts with plugin errors
 

@@ -18,6 +18,7 @@
         editor.lua
         csharp.lua
         completion.lua
+        debug.lua
   tmux.conf
 ```
 
@@ -232,6 +233,57 @@ return {
 
 Completion draws from LSP, paths, snippets, and buffer words. In insert mode: `Ctrl+Space` opens completion, `Ctrl+n`/`Ctrl+p` select, `Ctrl+y` accepts, `Ctrl+e` dismisses. Confirm mappings against the installed blink.cmp version if they differ.
 
+## `nvim/lua/config/plugins/debug.lua` — native debugger
+
+**Status:** The live debugger was tested successfully with `debug-test` and `sis-escape-run`. The actual tracked `debug.lua` remains authoritative. The following is the **verified algorithm and key configuration fragments**, not a claim that this documentation contains a byte-for-byte snapshot of the entire live file.
+
+```lua
+local dap = require("dap")
+dap.adapters.coreclr = {
+  type = "executable",
+  command = vim.fn.stdpath("data") .. "/mason/bin/netcoredbg",
+  args = { "--interpreter=vscode" },
+}
+
+-- Inside dap.configurations.cs[1]:
+program = function()
+  local cwd = vim.fn.getcwd()
+  local result = vim.system({
+    "dotnet", "msbuild",
+    "-getProperty:OutputType",
+    "-getProperty:TargetPath",
+    "-property:Configuration=Debug",
+  }, { cwd = cwd, text = true }):wait()
+
+  if result.code ~= 0 then
+    vim.notify("MSBuild project lookup failed: " .. (result.stderr or ""), vim.log.levels.ERROR)
+    return nil
+  end
+  local ok, data = pcall(vim.json.decode, result.stdout or "")
+  if not ok or type(data) ~= "table" or type(data.Properties) ~= "table" then
+    vim.notify("Unexpected MSBuild output", vim.log.levels.ERROR)
+    return nil
+  end
+  local props = data.Properties
+  if props.OutputType ~= "Exe" and props.OutputType ~= "WinExe" then
+    vim.notify("Current directory is not a runnable .NET project", vim.log.levels.ERROR)
+    return nil
+  end
+  local dll = props.TargetPath
+  if type(dll) ~= "string" or vim.fn.filereadable(dll) ~= 1 then
+    vim.notify("Run dotnet build -c Debug first", vim.log.levels.ERROR)
+    return nil
+  end
+  return dll
+end,
+```
+
+The actual plugin spec also declares `mfussenegger/nvim-dap`, `rcarriga/nvim-dap-ui`, and `nvim-neotest/nvim-nio`, sets breakpoint sign `●` and stopped sign `➜`, and registers `F5`, `F9`, `F10`, `F11`, `Shift+F11`, `Space db`, `Space dr`, `Space dt`, and `Space du`. `nvim-dap-ui` opens/closes with debugger sessions when its installation is complete. **Do not paste the fragment above as a whole Lua file**: it is intentionally scoped to the relevant parts of the plugin configuration. The known-good repository file is the recovery source.
+
+**External dependency:** Mason package `netcoredbg` was tested at version `3.1.3-1`; executable `~/.local/share/nvim/mason/bin/netcoredbg`. Install it separately from the plugin lockfile, verify `netcoredbg --version`, and confirm `:Lazy` reports DAP plugins installed. `nvim-dap-ui` and `nvim-nio` directories containing only `.git` indicate incomplete checkouts; use lazy.nvim's install/restore workflow rather than editing the DAP Lua to compensate.
+
+**Validation:** `nvim --clean --headless -n +"lua local f,e=loadfile(vim.fn.expand('~/.config/dotfiles/nvim/lua/config/plugins/debug.lua')); print(e or 'Lua syntax OK')" +qa` checks syntax only. A real `F5` launch is the integration test. See [DEBUGGING.md](DEBUGGING.md).
+
 ## `tmux.conf`
 
 ```tmux
@@ -268,9 +320,11 @@ This matches the behavior tested: `mouse on`, `base-index 1`, `default-terminal 
 | nvim-treesitter | `nvim-treesitter/nvim-treesitter` | Parser-based highlighting | Open `.cs`, `:InspectTree` where available |
 | mason.nvim | `mason-org/mason.nvim` | External tool installer | `:Mason` |
 | roslyn.nvim | `seblyng/roslyn.nvim` | C# LSP integration | `:checkhealth vim.lsp` |
+| nvim-dap / nvim-dap-ui / nvim-nio | Native C# debugging and UI | `:Lazy`, F5 in C# buffer |
+| netcoredbg (Mason binary) | External DAP adapter | `~/.local/share/nvim/mason/bin/netcoredbg --version` |
 | blink.cmp | `saghen/blink.cmp` | Completion UI | Type in a `.cs` buffer |
 
-**Restore order:** recover repository → symlink → start `nvim` → `:Lazy restore` → `:Mason` and install Roslyn binary → open a real C# solution → verify LSP and cross-project navigation. The plugin lockfile pins plugin Git revisions, **not** the .NET SDK, Treesitter parser binaries, or Mason tools.
+**Restore order:** recover repository → symlink → start `nvim` → `:Lazy restore` → `:Mason` and install Roslyn and netcoredbg binaries → open a real C# solution → verify LSP and cross-project navigation. The plugin lockfile pins plugin Git revisions, **not** the .NET SDK, Treesitter parser binaries, or Mason tools.
 
 ## If only this documentation survives
 

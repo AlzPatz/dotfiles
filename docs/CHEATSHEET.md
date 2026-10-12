@@ -29,6 +29,8 @@
 | `:Roslyn target` (in Neovim) | Choose C# project target | `git pull --ff-only` | Update clean checkout |
 | `:Mason` / `:Lazy restore` | Server tools / locked plugins | `:checkhealth vim.lsp` | Diagnose Roslyn attachment |
 
+**Debugging (C#):** `:pwd` shows project F5 targets · `:cd /path/to/app-project` changes it · `dotnet build -c Debug` in shell builds · `F5` starts/continues · `F9` breakpoint · `F10` step over · `F11` step in · `Shift+F11` step out (terminal permitting) · `Space db` breakpoint · `Space dr` REPL · `Space dt` stop · `Space du` DAP panels. F5 uses MSBuild `TargetPath` for the app project in `:pwd`; it does **not** build or scan dependency DLLs. [Full guide](DEBUGGING.md).
+
 **More Vim:** `/text` search · `n` / `N` next/previous · `u` undo · `Ctrl+r` redo · `yy` copy line · `dd` delete line · `p` paste · `:split` / `:vsplit` editor splits · `Ctrl+Space` completion, `Ctrl+y` accept (insert mode).
 
 **Recommended 3-pane day:** tmux → `nvim .` → split `%`, `claude` → split `"` for `dotnet build` / `dotnet test`. Switch with `Ctrl+b` + arrows. **Save Neovim buffer before Claude edits; use `:checktime`, review `git diff`, then build/test.** tmux survives detach, **not reboot**.

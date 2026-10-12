@@ -1,0 +1,91 @@
+return {
+  {
+    "mfussenegger/nvim-dap",
+    config = function()
+  local dap = require("dap")
+
+  -- Make breakpoints and the current execution line visible
+  vim.fn.sign_define("DapBreakpoint", {
+    text = "●",
+    texthl = "DiagnosticSignError",
+  })
+
+  vim.fn.sign_define("DapStopped", {
+    text = "➜",
+    texthl = "DiagnosticSignInfo",
+    linehl = "Visual",
+    numhl = "",
+  })
+
+      dap.adapters.coreclr = {
+        type = "executable",
+        command = vim.fn.stdpath("data") .. "/mason/bin/netcoredbg",
+        args = { "--interpreter=vscode" },
+      }
+
+      dap.configurations.cs = {
+        {
+          type = "coreclr",
+          name = "Launch compiled .NET assembly",
+          request = "launch",
+          program = function()
+  local root = vim.fn.getcwd()
+
+  local candidates = vim.fn.globpath(
+    root,
+    "**/bin/Debug/**/*.dll",
+    false,
+    true
+  )
+
+  local dlls = {}
+
+  for _, path in ipairs(candidates) do
+    if not path:match("/ref/") and not path:match("/refint/") then
+      table.insert(dlls, path)
+    end
+  end
+
+  table.sort(dlls)
+
+  if #dlls == 0 then
+    vim.notify("No Debug DLLs found. Run dotnet build first.", vim.log.levels.ERROR)
+    return nil
+  end
+
+  if #dlls == 1 then
+    return dlls[1]
+  end
+
+  local options = { "Select a .NET assembly:" }
+
+  for i, path in ipairs(dlls) do
+    table.insert(options, i .. ". " .. vim.fn.fnamemodify(path, ":."))
+  end
+
+  local choice = vim.fn.inputlist(options)
+
+  if choice < 1 or choice > #dlls then
+    return nil
+  end
+
+  return dlls[choice]
+end,
+          cwd = "${workspaceFolder}",
+          stopAtEntry = false,
+        },
+      }
+
+      local map = vim.keymap.set
+
+      map("n", "<F5>", dap.continue, { desc = "Debug: start/continue" })
+      map("n", "<F9>", dap.toggle_breakpoint, { desc = "Debug: toggle breakpoint" })
+      map("n", "<F10>", dap.step_over, { desc = "Debug: step over" })
+      map("n", "<F11>", dap.step_into, { desc = "Debug: step into" })
+      map("n", "<S-F11>", dap.step_out, { desc = "Debug: step out" })
+      map("n", "<leader>db", dap.toggle_breakpoint, { desc = "Debug: toggle breakpoint" })
+      map("n", "<leader>dr", dap.repl.open, { desc = "Debug: REPL" })
+      map("n", "<leader>dt", dap.terminate, { desc = "Debug: terminate" })
+    end,
+  },
+}

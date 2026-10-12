@@ -8,16 +8,17 @@ Personal, version-controlled development environment for Fedora, Neovim, C#/.NET
 
 | Path | Purpose |
 | --- | --- |
-| `nvim/init.lua` | Neovim entry point |
-| `nvim/lua/config/options.lua` | Editor preferences and diagnostic appearance |
-| `nvim/lua/config/keymaps.lua` | Global Neovim keybindings |
-| `nvim/lua/config/lazy.lua` | lazy.nvim bootstrap and plugin loader |
-| `nvim/lua/config/plugins/navigation.lua` | Neo-tree and Telescope |
-| `nvim/lua/config/plugins/editor.lua` | Treesitter parsers and highlighting |
-| `nvim/lua/config/plugins/csharp.lua` | Mason and Roslyn |
-| `nvim/lua/config/plugins/completion.lua` | blink.cmp completion |
-| `nvim/lazy-lock.json` | Plugin version lockfile |
-| `tmux.conf` | tmux mouse, splits, terminal, numbering, and reload key |
+| `../nvim/init.lua` | Neovim entry point |
+| `../nvim/lua/config/options.lua` | Editor preferences and diagnostic appearance |
+| `../nvim/lua/config/keymaps.lua` | Global Neovim keybindings |
+| `../nvim/lua/config/lazy.lua` | lazy.nvim bootstrap and plugin loader |
+| `../nvim/lua/config/plugins/navigation.lua` | Neo-tree and Telescope |
+| `../nvim/lua/config/plugins/editor.lua` | Treesitter parsers and highlighting |
+| `../nvim/lua/config/plugins/csharp.lua` | Mason and Roslyn |
+| `../nvim/lua/config/plugins/completion.lua` | blink.cmp completion |
+| `../nvim/lua/config/plugins/debug.lua` | Native C# debugging with nvim-dap and netcoredbg |
+| `../nvim/lazy-lock.json` | Plugin version lockfile |
+| `../tmux.conf` | tmux mouse, splits, terminal, numbering, and reload key |
 | `TOOLS.md` | Recorded tool versions |
 | `MANUAL.md` | Complete recovery, setup, daily usage, and troubleshooting guide |
 | `CONFIG_REFERENCE.md` | Full Neovim Lua/tmux source-level reconstruction and plugin verification |
@@ -69,7 +70,7 @@ Read **[MANUAL.md](MANUAL.md)** before starting, especially if Neovim or tmux is
    nvim
    ```
 
-   Then use `:Lazy restore` to restore plugin versions from `nvim/lazy-lock.json`, and `:Mason` to install `roslyn-language-server` if it is missing. See the manual for version and compatibility notes.
+   Then use `:Lazy restore` to restore plugin versions from `../nvim/lazy-lock.json`, and `:Mason` to install `roslyn-language-server` if it is missing. See the manual for version and compatibility notes.
 
 5. Verify tmux:
 
@@ -82,6 +83,9 @@ Read **[MANUAL.md](MANUAL.md)** before starting, especially if Neovim or tmux is
    Expect `mouse on` and `base-index 1`.
 
 ## Daily workflow
+
+**Debugging:** `:pwd` inside Neovim identifies the application project directory. Use `:cd /path/to/app-project` to change it; build with `dotnet build -c Debug`, then press `F5` in a C# buffer. The configured debugger asks MSBuild for the current project’s `OutputType` and `TargetPath` and launches that DLL, not a random dependency. `F9` toggles breakpoints. See [DEBUGGING.md](DEBUGGING.md) for the tested workflow, limitations, and troubleshooting.
+
 
 From the directory containing your `.sln` file:
 
@@ -105,7 +109,7 @@ Run `nvim .` in one pane, press `Ctrl+b` then `%` to split left/right, and run `
 | `[d`, `]d`, `Space e` | Previous/next diagnostic; diagnostic details |
 | `Ctrl+h/j/k/l` | Move between **Neovim** windows |
 
-For a concise everyday command reference, see **[CHEATSHEET.md](CHEATSHEET.md)**. For full shortcuts, debugging, Claude Code safety, and machine recovery, see **[MANUAL.md](MANUAL.md)**.
+For a concise everyday command reference, see **[CHEATSHEET.md](CHEATSHEET.md)**. For full shortcuts, debugging, Claude Code safety, and machine recovery, see **[MANUAL.md](MANUAL.md)** and **[DEBUGGING.md](DEBUGGING.md)**.
 
 ## Sync changes
 
@@ -113,7 +117,7 @@ For a concise everyday command reference, see **[CHEATSHEET.md](CHEATSHEET.md)**
 cd ~/.config/dotfiles
 git status --short
 git diff --check
-git add README.md MANUAL.md CHEATSHEET.md REBUILD_PROMPT.md CONFIG_REFERENCE.md
+git add docs/ nvim/lua/config/plugins/debug.lua nvim/lazy-lock.json
 git diff --cached --stat
 git commit -m "Update development environment documentation"
 git push
